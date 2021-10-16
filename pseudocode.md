@@ -17,6 +17,7 @@ a SAM file with PCR duplicate reads removed
 5. UMI // col 1 // QNAME // split by ':' -> last element in list = UMI
  
 ### Pseudocode:
+```
 samtools sort # by first sorting by position, we wont have to check for pcr dups across all reads
 
 Include an argparse option to specify text file with list of UMIs [if no arg given, will assume random UMIs used]
@@ -54,7 +55,7 @@ for each line:
             output the read 
 
 Once we reach the end of the SAM file, we will close the input and output SAM files
-
+```
 ### High Level Functions:
 
 ```
