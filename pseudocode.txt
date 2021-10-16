@@ -16,7 +16,7 @@ Define the problem:
 
  Input/Outputs:   
     As input, we are given (1) a SAM file with uniquely mapped reads (single-end) and (2) a text 
-    file with a list of UMIs.
+    file with a list of known UMIs.
     As output, we will generate a new SAM file with PCR duplicate reads removed. 
 
 SAM file columns of interest:
@@ -35,10 +35,15 @@ Pseudocode:
     Open the sorted input SAM file for reading and the output SAM file for writing 
         ->ouput @ header lines to the output SAM file
 
+    # my general strategy for parsing the file will be to use a PriorityQueue() object to store the last 300 encountered positions alongside a dictionary of the same size that will store the positions in queue +  encountered UMIs at each position
+    # this way we only need to store pos/UMI info for up to 300 items at a time instead of keeping an ongoing list of all pos/UMIs  
+    # with the queue every time we add a new element, we will also remove an element [with lowest position], allowing us to maintain at most 300 elements in the queue and dictionary at any one moment
+    # i am assuming that after adjusting for soft-clipping the adjusted position will never be >300 nucleotides away (impossible if our read lengths are less than 300)
+    # the max size of 300 can be adjusted if necessary, depending on if we know the max read length of the file, can set it to that value 
+
     before starting to loop through reads, set up containers to store positions and UMIs
-        pos_queue -> will use PriorityQueue() set to max size of 300? to store last 300 encountered positions [will be ordered by position] 
+        pos_queue -> will use PriorityQueue() set to max length of 300 to store last 300 encountered positions [will be ordered by position] 
             every time we add a new position, will pop off the item in queue with lowest start position 
-            can also use max read length of the SAM file instead of 300 
         pos_UMI_dict -> will store the positions in queue at any specific moment with the position as the key and the as the value a set of UMIs
     
     for each line:
@@ -54,7 +59,7 @@ Pseudocode:
             else:
                 add cur_pos to pos_UMI_dict with cur_UMI as an element in the set 
                 if pos_queue is full (has 300 elements)
-                    pop off the element in pos_queue with lowest position 
+                    pop off the element in pos_queue with lowest position + delete it from the dictionary
                 add cur_pos to pos_queue 
                 output the read 
 
