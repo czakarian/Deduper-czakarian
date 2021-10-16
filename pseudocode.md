@@ -35,12 +35,12 @@ Open the sorted input SAM file for reading and the output SAM file for writing
 before starting to loop through reads, set up containers to store positions and UMIs
     pos_queue -> will use PriorityQueue() set to max length of 300 to store last 300 encountered positions [will be ordered by position] 
         every time we add a new position, will pop off the item in queue with lowest start position 
-    pos_UMI_dict -> will store the positions in queue at any specific moment with the position as the key and the as the value a set of UMIs
+    pos_UMI_dict -> will store the positions in queue at any specific moment with the position as the key and the value a set of UMIs
 
 for each line:
     read in the line & split by tabs [store in var called cols]
     extract the UMI from the QNAME (cols[0]) and store in var called cur_UMI
-    if UMI in known_UMIs: 
+    if cur_UMI in known_UMIs: 
         extract & store the position using get_position() function which will take as input the read line and return a string of form 11:123456:+ [chr:start:strand] 
             store in var called cur_pos
         if cur_pos in pos_UMI_dict:
