@@ -57,6 +57,7 @@ Once we reach the end of the SAM file, we will close the input and output SAM fi
 
 ### High Level Functions:
 
+```
 def get_strand(seq:int) -> str:
 """This function returns the strand(+/-) for a read in a SAM file based on the bit flag value"""
     # returns + if positive strand and - if reverse complemented strand 
@@ -67,7 +68,8 @@ Example:
     Expected output: + 
     Input: 16 
     Expected output: - 
-
+```
+```
 def adjust_start_pos(start_pos:str, cigar:str) -> int:
 """This function returns the corrected start position for a read that has been softclipped"""
     # Takes as input the start position and the CIGAR string to check for soft clipping 
@@ -80,7 +82,8 @@ Example:
     Expected output:  76814282
     Input: 76814284, 71M 
     Expected output:  76814284
-
+```
+```
 def get_position(line:int) -> str:
 """This function reads in a read line from a SAM file and generates a string with the position info (chrom, start position, strand)"""        
     # split line by tab delimeter
@@ -91,3 +94,4 @@ def get_position(line:int) -> str:
 Example:
     Input: 
     Expected output: 11:123456:+
+```
