@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
-""" This program performs deduplicating/removal of PCR duplicates from RNA-seq data. For the script to work, 
-need to provide a sorted SAM file of uniquely mapped reads as input. 
-Random UMIs or known UMIs. Single or Paired end. """
+""" This program performs deduplicating/removal of PCR duplicates from single-end RNA-seq data. 
+Requires as input a sorted SAM file of uniquely mapped reads and a list of UMIs."""
 
 import argparse
 import Bioinfo 
