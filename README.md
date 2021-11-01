@@ -13,8 +13,12 @@ Given a sorted SAM file of uniquely mapped reads, will remove all PCR duplicates
     - ```-u```, ```--umi```: optional arg, designates file containing the list of UMIs (unset if randomers instead of UMIs)
 
 ### Output
-1. SAM file with PCR duplicates removed ({filename}_deduped.sam)
-2. Summary statistics (# of dups removed, unique reads per chromosome)
+1. SAM file with PCR duplicates removed 
+    - {filename}_deduped.sam
+2. Summary statistics 
+    - number of dups removed
+    - number of reads with invalid UMIs 
+    - number of unique reads per chromosome
 
 
 
