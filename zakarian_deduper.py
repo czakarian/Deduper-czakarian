@@ -60,6 +60,7 @@ invalid_UMIs = 0 # counter to track number of reads with invalid UMIs
 dups = 0 # counter to track number of PCR duplicates removed
 chrom = "1" # track which chromosome is being parsed to avoid storing chrom individually for each read in dictionary
 unique_reads = {"1":0} # counter dictionary for number of unique reads per chromosome
+strand_count = {True: 0, False: 0} # counter for unique reads mapping to each strand
 
 # Initialize list of UMIs as keys in our dictionary
 with open(umi_file, "r") as fr:
@@ -73,8 +74,10 @@ with open(file, "r") as fr, open(file[:-4] + "_deduped.sam", "w") as fw:
             fw.write(line)
         else:
             cols = line.split()
+            
             # extract and store the umi 
             umi = cols[0].split(":")[-1] 
+            
             # if umi is valid proceed, otherwise skip read
             if umi in UMI_pos_dict:
                 # if we reach next chromosome, clear out the dictionary before proceeding
@@ -82,14 +85,17 @@ with open(file, "r") as fr, open(file[:-4] + "_deduped.sam", "w") as fw:
                     chrom = cols[2]
                     UMI_pos_dict = {k: set() for k in UMI_pos_dict.keys()} # will reset values of all umi keys to empty set 
                     unique_reads[chrom] = 0
+                
                 # extract and store the corrected start postion and strand 
                 strand = get_strand(int(cols[1]))
                 start_pos = get_start(int(cols[3]), cols[5], strand)
+                
                 # if we haven't already encountered this pos/strand with this umi, add to set for that umi and write read to output file 
                 if (start_pos, strand) not in UMI_pos_dict[umi]:
                     UMI_pos_dict[umi].add((start_pos, strand))
                     fw.write(line)
                     unique_reads[chrom] += 1
+                    strand_count[strand] += 1
                 else:
                     dups += 1
             else:
@@ -98,6 +104,8 @@ with open(file, "r") as fr, open(file[:-4] + "_deduped.sam", "w") as fw:
 # Output summary statistics
 print("Duplicates Removed: ", dups)
 print("Invalid UMIs: ", invalid_UMIs)
+prop_pos_strand = strand_count[True]/(strand_count[True] + strand_count[False]) * 100
+print("% Reads mapping to + strand: ", round(prop_pos_strand,2) , "%")
 print("Unique Reads Per Chromosome:")
 for c in unique_reads:
     print(c, "\t", unique_reads[c])
