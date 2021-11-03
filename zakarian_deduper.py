@@ -4,7 +4,36 @@
 Requires as input a sorted SAM file of uniquely mapped reads and a list of UMIs."""
 
 import argparse
-import Bioinfo 
+import re
+# import Bioinfo 
+
+def get_strand(flag:int) -> bool :
+    """This function returns the strand for a read in a SAM file based on the bit flag value. 
+    Returns True if positive strand and False if reverse strand."""
+    return (flag & 16) != 16
+
+def get_start(start_pos:int, cigar:str, strand:bool) -> int:
+    """This function returns the true 5' start position (adjusted for soft clipping) 
+    for reads mapping to + strand or the - strand."""
+    
+    # for + strand reads, adjust soft clipping at the beginning of CIGAR string
+    if strand:
+        result = re.match('^([0-9]+)S', cigar)
+        if result:  
+            start_pos -= int(result[1])
+    
+    # for - strand reads, sum M/D/N/S values and add that to start_pos, ignore any inserts and soft clipping at the beginning   
+    else:
+        result_S = re.search('([0-9]+)S$', cigar)
+        result_MDN = re.findall('([0-9]+)[MDN]', cigar)
+        if result_S:
+            start_pos += int(result_S[1])
+        if result_MDN:
+            start_pos += sum(map(int, result_MDN))
+        # subtract 1 to correct to actual position // technically not necessary for the purpose of identifying dups 
+        start_pos -= 1
+    
+    return start_pos
 
 def get_args():
     """This function returns the parser arguments entered in command line"""
@@ -26,11 +55,11 @@ if not args.umi:
     exit("Warning: This script does not yet handle ramdom UMIs. Please provide list of UMIs in a text file. Exiting.")
 
 # Initialize variables 
-UMI_pos_dict = {} # Dictionary to store UMIs and encountered positions (Key = UMI, Value = Set of tuples of form: (start,strand) // dont need to store chromosome because dictionary will be reset for each chromosome
-invalid_UMIs = 0 # counter to keep track of the total number of invalid UMIs encountered
-dups = 0 # counter to keep track of how many PCR duplicates we encounter 
-chrom = "1" # track which chromosome is being parsing so we don't have to store chrom individually for each read in our dictionary
-unique_reads = {"1":0} # tracks # of unique reads per chromosome
+UMI_pos_dict = {} # Dictionary to store UMIs and encountered positions (Key = UMI, Value = Set of tuples of form: (start,strand) // dictionary will be reset for each chromosome
+invalid_UMIs = 0 # counter to track number of reads with invalid UMIs
+dups = 0 # counter to track number of PCR duplicates removed
+chrom = "1" # track which chromosome is being parsed to avoid storing chrom individually for each read in dictionary
+unique_reads = {"1":0} # counter dictionary for number of unique reads per chromosome
 
 # Initialize list of UMIs as keys in our dictionary
 with open(umi_file, "r") as fr:
@@ -54,8 +83,8 @@ with open(file, "r") as fr, open(file[:-4] + "_deduped.sam", "w") as fw:
                     UMI_pos_dict = {k: set() for k in UMI_pos_dict.keys()} # will reset values of all umi keys to empty set 
                     unique_reads[chrom] = 0
                 # extract and store the corrected start postion and strand 
-                strand = Bioinfo.get_strand(int(cols[1]))
-                start_pos = Bioinfo.get_start(int(cols[3]), cols[5], strand)
+                strand = get_strand(int(cols[1]))
+                start_pos = get_start(int(cols[3]), cols[5], strand)
                 # if we haven't already encountered this pos/strand with this umi, add to set for that umi and write read to output file 
                 if (start_pos, strand) not in UMI_pos_dict[umi]:
                     UMI_pos_dict[umi].add((start_pos, strand))

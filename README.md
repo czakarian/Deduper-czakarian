@@ -1,7 +1,7 @@
 # Deduper - A Reference Based PCR Duplicate Removal Tool
 
-Given a sorted SAM file of uniquely mapped reads, will remove all PCR duplicates and retain only a single copy of each read. 
-
+Given a sorted SAM file of uniquely mapped reads, this program will remove all PCR duplicates, retaining only a single copy of each read. 
+PCR duplicates will have the same UMI and start position (after correcting for soft clipping) on the same chromosome and strand.
 
 ### Input
 1. SAM file sorted by chromosome/position (samtools sort)
@@ -21,8 +21,7 @@ Given a sorted SAM file of uniquely mapped reads, will remove all PCR duplicates
     - number of unique reads per chromosome
 
 
-
 #### Functionality to add:  
     - Single-end vs paired-end  
     - Known UMIs vs randomers (error correction?)  
-    - Choice of duplicate written to file (first encountered or highest quality)
+    - Choice of duplicate written to file (first encountered or highest quality) 

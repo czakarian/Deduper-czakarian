@@ -85,26 +85,28 @@ def get_strand(flag:int) -> bool :
     Returns True if positive strand and False if reverse strand."""
     return (flag & 16) != 16
 
-def get_start(start_pos:int, cigar:str, strand:str) -> int:
-    """This function returns the corrected start position (adjusted for soft clipping) 
-    and the actual 5' start position for reads mapping to reverse strand."""
-    adjust = 0 # will track adjustment to make to start position
+def get_start(start_pos:int, cigar:str, strand:bool) -> int:
+    """This function returns the true 5' start position (adjusted for soft clipping) 
+    for reads mapping to + strand or the - strand."""
+    
     # for + strand reads, adjust soft clipping at the beginning of CIGAR string
     if strand:
         result = re.match('^([0-9]+)S', cigar)
         if result:  
-            adjust = 0 - int(result[1])
+            start_pos -= int(result[1])
+    
     # for - strand reads, sum M/D/N/S values and add that to start_pos, ignore any inserts and soft clipping at the beginning   
     else:
         result_S = re.search('([0-9]+)S$', cigar)
         result_MDN = re.findall('([0-9]+)[MDN]', cigar)
         if result_S:
-            adjust += int(result_S[1])
+            start_pos += int(result_S[1])
         if result_MDN:
-            adjust += sum(map(int, result_MDN))
-        # subtract 1 to correct to actual position // technically not necessary
-        adjust -= 1
-    return start_pos + adjust
+            start_pos += sum(map(int, result_MDN))
+        # subtract 1 to correct to actual position // technically not necessary for the purpose of identifying dups 
+        start_pos -= 1
+    
+    return start_pos
 
 if __name__ == "__main__":
     assert validate_base_seq("AATAGAT") == True, "Validate base seq does not work on DNA"
