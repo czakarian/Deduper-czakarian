@@ -8,7 +8,7 @@
 
 file=/projects/bgmp/czakari2/bioinformatics/Bi624/Deduper-czakarian/C1_SE_uniqAlign_sorted.sam
 umi=/projects/bgmp/czakari2/bioinformatics/Bi624/Deduper-czakarian/STL96.txt
+script=/projects/bgmp/czakari2/bioinformatics/Bi624/Deduper-czakarian/zakarian_deduper.py
 
-cd ..
 
-/usr/bin/time -v ./zakarian_deduper.py -f $file -u $umi
+/usr/bin/time -v $script -f $file -u $umi
