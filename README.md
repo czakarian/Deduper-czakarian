@@ -11,6 +11,7 @@ PCR duplicates will have the same UMI and start position (after correcting for s
     - ```-f```, ```--file```: required arg, absolute file path of SAM file
     - ```-p```, ```--paired```: optional arg, designates file is paired end (not yet implemented)
     - ```-u```, ```--umi```: optional arg, designates file containing the list of UMIs (unset if randomers instead of UMIs)
+    - ```-q```, ```--quality```: optional arg, will output duplicate read of highest average quality (if unset, will output first duplicate encountered)
 
 ### Output
 1. SAM file with PCR duplicates removed 
