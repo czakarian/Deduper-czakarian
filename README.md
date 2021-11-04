@@ -9,7 +9,7 @@ PCR duplicates will have the same UMI and start position (after correcting for s
 
 - argparse options:
     - ```-f```, ```--file```: required arg, absolute file path of SAM file
-    - ```-p```, ```--paired```: optional arg, designates file is paired end
+    - ```-p```, ```--paired```: optional arg, designates file is paired end (not yet implemented)
     - ```-u```, ```--umi```: optional arg, designates file containing the list of UMIs (unset if randomers instead of UMIs)
 
 ### Output
@@ -19,9 +19,3 @@ PCR duplicates will have the same UMI and start position (after correcting for s
     - number of dups removed
     - number of reads with invalid UMIs 
     - number of unique reads per chromosome
-
-
-#### Functionality to add:  
-    - Single-end vs paired-end  
-    - Known UMIs vs randomers (error correction?)  
-    - Choice of duplicate written to file (first encountered or highest quality) 
