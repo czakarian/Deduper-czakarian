@@ -108,6 +108,19 @@ def get_start(start_pos:int, cigar:str, strand:bool) -> int:
     
     return start_pos
 
+def get_highest_qual(dups):
+    """This function will take as input a list of PCR duplicate reads and will 
+    return the index for the read in list with highest average quality score."""
+    highest_qual = 0 # will store highest average quality score 
+    highest_ind = 0 # will store index of read with highest qual 
+    for i,r in enumerate(dups):
+        qs = qual_score(r.split()[10])
+        if highest_qual < qs:
+            highest_qual = qs
+            highest_ind = i
+    return highest_ind
+
+
 if __name__ == "__main__":
     assert validate_base_seq("AATAGAT") == True, "Validate base seq does not work on DNA"
     assert validate_base_seq("AAUAGAU", True) == True, "Validate base seq does not work on RNA"
@@ -151,3 +164,10 @@ if __name__ == "__main__":
     assert get_start(100, "5M10N5M", False) == 119, "get_start does not return correct start position"
     assert get_start(100, "2S5M2D2I2N5M2S", False) == 115, "get_start does not return correct start position"
     print("Passed. get_start correctly adjusted start positions")
+
+    assert get_highest_qual([
+        "NS500451	0	1	100	36	71M	*	0	0	TCCACCACAAT	AAEEEEEEEEE	MD:Z:71	NH:i:1	HI:i:1	NM:i:0	SM:i:36	XQ:i:40	X2:i:0	XO:Z:UU",
+        "NS500451	0	1	100	36	71M	*	0	0	TCCACCACAAT	AAAAAAAAAAA	MD:Z:71	NH:i:1	HI:i:1	NM:i:0	SM:i:36	XQ:i:40	X2:i:0	XO:Z:UU",
+        "NS500451	0	1	100	36	71M	*	0	0	TCCACCACAAT	AEEEEEEEEEE	MD:Z:71	NH:i:1	HI:i:1	NM:i:0	SM:i:36	XQ:i:40	X2:i:0	XO:Z:UU"
+    ]) == 2, "get_highest_qual does not return correct index"
+    print("Passed. get_highest_qual correctly identified read with highest avg quality score")
