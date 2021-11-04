@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 """ This program performs deduplicating/removal of PCR duplicates from single-end RNA-seq data. 
-Requires as input a sorted SAM file of uniquely mapped reads and a list of UMIs."""
+Requires as input a sorted SAM file of uniquely mapped reads and a list of UMIs. If list of UMIs
+not provided, will assume random UMIs used."""
 
 import argparse
-import re
 # import Bioinfo 
+import re 
 
 def get_strand(flag:int) -> bool :
     """This function returns the strand for a read in a SAM file based on the bit flag value. 
@@ -49,10 +50,8 @@ file= args.file
 paired = args.paired
 umi_file = args.umi
 
-if args.paired:
+if paired:
     exit("Warning: This script does not yet handle paired end files. Exiting.")
-if not args.umi:
-    exit("Warning: This script does not yet handle ramdom UMIs. Please provide list of UMIs in a text file. Exiting.")
 
 # Initialize variables 
 UMI_pos_dict = {} # Dictionary to store UMIs and encountered positions (Key = UMI, Value = Set of tuples of form: (start,strand) // dictionary will be reset for each chromosome
@@ -62,10 +61,12 @@ chrom = "1" # track which chromosome is being parsed to avoid storing chrom indi
 unique_reads = {"1":0} # counter dictionary for number of unique reads per chromosome
 strand_count = {True: 0, False: 0} # counter for unique reads mapping to each strand
 
-# Initialize list of UMIs as keys in our dictionary
-with open(umi_file, "r") as fr:
-    for line in fr:
-        UMI_pos_dict[line.strip()] = set() # set value as an empty set
+
+# If UMI list provided, initialize list of UMIs as keys in UMI_pos_dict
+if umi_file:
+    with open(umi_file, "r") as fr:
+        for line in fr:
+            UMI_pos_dict[line.strip()] = set() # set value as an empty set 
 
 with open(file, "r") as fr, open(file[:-4] + "_deduped.sam", "w") as fw:
     for line in fr:
@@ -74,32 +75,49 @@ with open(file, "r") as fr, open(file[:-4] + "_deduped.sam", "w") as fw:
             fw.write(line)
         else:
             cols = line.split()
-            
-            # extract and store the umi 
+
+            # extract UMI from QNAME
             umi = cols[0].split(":")[-1] 
-            
-            # if umi is valid proceed, otherwise skip read
+
+            # if we reach a read on the next chromosome, store new chrom value and clear out the dictionary before continuing 
+            if cols[2] != chrom:
+                chrom = cols[2]
+                # if known UMIs, clear values of dictionary but keep UMIs as keys
+                if umi_file:
+                    UMI_pos_dict = {k: set() for k in UMI_pos_dict.keys()} # will reset values of all umi keys to empty set            
+                # if random UMIs, just clear out the whole dictionary (keys and values)
+                else:
+                    UMI_pos_dict = {}
+                unique_reads[chrom] = 0
+
+            # extract and store the corrected start postion and strand 
+            strand = get_strand(int(cols[1]))
+            start_pos = get_start(int(cols[3]), cols[5], strand)
+
+            # if umi in dict, its either (1) known UMI or (2) random UMI we have already encounterd 
+            # for both cases, we will check if its a dup by checking if we have already seen a read at the position 
             if umi in UMI_pos_dict:
-                # if we reach next chromosome, clear out the dictionary before proceeding
-                if cols[2] != chrom:
-                    chrom = cols[2]
-                    UMI_pos_dict = {k: set() for k in UMI_pos_dict.keys()} # will reset values of all umi keys to empty set 
-                    unique_reads[chrom] = 0
-                
-                # extract and store the corrected start postion and strand 
-                strand = get_strand(int(cols[1]))
-                start_pos = get_start(int(cols[3]), cols[5], strand)
-                
-                # if we haven't already encountered this pos/strand with this umi, add to set for that umi and write read to output file 
+                # if (start_pos, strand) not in set for this umi, add to set and write read to output file 
                 if (start_pos, strand) not in UMI_pos_dict[umi]:
                     UMI_pos_dict[umi].add((start_pos, strand))
                     fw.write(line)
                     unique_reads[chrom] += 1
                     strand_count[strand] += 1
+                # otherwise it is a dup 
                 else:
                     dups += 1
-            else:
+
+            # if umi not in dict and using known UMIs, it is an invalid UMI 
+            # if using randomers, we will mark as invalid if UMI contains any N's
+            elif umi_file or "N" in umi:
                 invalid_UMIs += 1
+            
+            # if umi not in dict and using ramdomers, cant be dup so add umi to dictionary and write read to output
+            else:
+                UMI_pos_dict[umi] = {(start_pos, strand)}
+                fw.write(line)
+                unique_reads[chrom] += 1
+                strand_count[strand] += 1
 
 # Output summary statistics
 print("Duplicates Removed: ", dups)
